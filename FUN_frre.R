@@ -1,4 +1,4 @@
-# frre - method fensijana totalna
+# frre - dispatch method fensijana totalna
 
 frre <- function(x,...){
   UseMethod("frre")
@@ -35,7 +35,7 @@ frre.labelled <- function (x, varLabDuljina = 40, valLabDuljina = 35, ime="", N 
     }
   }
 
-# PRIMJERI # labelled
+# PRIMJERI # labelled ----
 s1 <- labelled(c("M", "M", "F"), c(Male = "M", Female = "F"))
 s2 <- labelled(c(1, 1, 2), c(Male = 1, Female = 2))
 label(s2) <- "A vector to label. Must be either numeric or character."
@@ -52,7 +52,7 @@ frre(jezgra$vrij6, digits = 3) # TODO treba implementirati
                                # defaultni argument koji se može mijenjati u kable
 frre(jezgra$vrij6, 
      caption = "naslov koji se ne vidi, ali je valjda tu") # argument proslijeđen u kable
-
+# ====
 
 # factor v 2 ----
 frre.factor <- function (x, varLabDuljina = 40, valLabDuljina = 35, 
@@ -84,7 +84,7 @@ frre.factor <- function (x, varLabDuljina = 40, valLabDuljina = 35,
   }
 }
 
-# PRIMJERI # factor
+# PRIMJERI # factor ----
 s1 <- labelled(c("M", "M", "F"), c(Male = "M", Female = "F"))
 s1f <- labelled::as_factor(s1)
 frre(s1); frre(s1f)
@@ -93,27 +93,44 @@ frre(diamonds$cut, ime = "Cut of the diamonds", N = TRUE)
 #
 jezgra$obraz <- recode(jezgra$dmg3, " 1:3 = 1; 4:5 = 2; 6:9 = 3; 98 = NA")
 jezgra$obraz %<>% factor(labels = c("Osnovna", "Srednja", "Visoka")) 
-# NE OVAKO label(jezgra$obraz) <- label(jezgra$dmg3)
-label(jezgra$obraz) <- "obrazovanje ispitanika" # OK
+# NE OVAKO label(jezgra$obraz) <- label(jezgra$dmg3) ### NI OVAKO label(jezgra$obraz) <- "obrazovanje ispitanika"
 attributes(jezgra$obraz)[["label"]] <- attributes(jezgra$dmg3)[["label"]] # OK
 frre(jezgra$obraz, var = 30)
+# ====
 
 # numeric ----
-frre.numeric <- function (x, vaRlabDuljina = 40, vaLlabDuljina = 35) {
-  njumerik <- labelled::as_factor(x, levels = "prefixed")
-  levels(njumerik) <- strtrim(levels(njumerik), vaLlabDuljina)
-  gnjec.df <- merge.data.frame(as.data.frame(table(njumerik)),
-                               as.data.frame(prop.table(table(njumerik))),
-                               by = "njumerik")
-  if (!is.null(attr(x, "label"))) names(gnjec.df)[1] <- strtrim(attr(x, "label"), varLabDuljina)
+frre.numeric <- function (x, varLabDuljina = 40, ime="", 
+                          prosjekN = FALSE, kablica = TRUE, ...) {
+  varlab <- attributes(x)[["label"]]
+  if (nchar(ime) > 0) {
+    varlab <- ime
+    if (varLabDuljina == 40) varLabDuljina <- 200
+  }
+  nejm <- deparse(substitute(x))
+  gnjec.df <- merge.data.frame(as.data.frame(table(x)),
+                               as.data.frame(prop.table(table(x))),
+                               by = "x")
+  if (!is.null(varlab)) {
+    names(gnjec.df)[1] <- strtrim(varlab, varLabDuljina)
+  } else names(gnjec.df)[1] <- nejm
   names(gnjec.df)[2] <- "Counts"
   names(gnjec.df)[3] <- "Percents"
-  gnjec.df$Percents <- round(gnjec.df$Percents * 100)
-  return(gnjec.df) }
+  
+  if (prosjekN) {
+    print(paste("valid =", sum(!is.na(x)),
+                " missing =", sum(is.na(x)),
+                "mean =", round(mean(x, na.rm = TRUE), digits = 2)))
+  }
+  if (kablica) {
+    knitr::kable(gnjec.df, digits = 2, ...)
+  } else {
+    gnjec.df$Percents <- round(gnjec.df$Percents * 100)
+    return(gnjec.df) 
+  }
+}
 
-
-
-frre(jezgra$obraz) # OK
-
-frre(jezgra$obraz) # faktor = OK; faktor s labelom još i bolji
-label(jezgra$obraz) <- "obrazovanje ispitanika" ; frre(jezgra$obraz)
+# PRIMJERI # numeric ----
+frre(mtcars$cyl, prosjek = TRUE, moj_summary = TRUE)
+frre(diamonds$carat, prosjek = TRUE) # bzvz
+hist(diamonds$carat); summary(diamonds$carat) # klasika je bolja
+# ====
