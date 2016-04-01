@@ -74,8 +74,8 @@ frre.factor <- function (x, varLabDuljina = 40, valLabDuljina = 35,
   names(gnjec.df)[2] <- "Counts"
   names(gnjec.df)[3] <- "Percents"
   if (N) {
-    print(paste("valid =", sum(!is.na(x)),
-                " missing =", sum(is.na(x))))
+    cat("valid =", sum(!is.na(x)),
+        " missing =", sum(is.na(x)))
   }
   if (kablica) {
     knitr::kable(gnjec.df, digits = 2, ...)
@@ -118,9 +118,9 @@ frre.numeric <- function (x, varLabDuljina = 40, ime="",
   names(gnjec.df)[3] <- "Percents"
   
   if (prosjekN) {
-    print(paste("valid =", sum(!is.na(x)),
+    cat("valid =", sum(!is.na(x)),
                 " missing =", sum(is.na(x)),
-                "mean =", round(mean(x, na.rm = TRUE), digits = 2)))
+                "mean =", round(mean(x, na.rm = TRUE), digits = 2))
   }
   if (kablica) {
     knitr::kable(gnjec.df, digits = 2, ...)
