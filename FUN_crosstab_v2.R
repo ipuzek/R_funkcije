@@ -1,25 +1,66 @@
 # rekreirati SPSS ###
+library(dplyr)
+library(labelled)
 library(knitr)
 library(ggplot2)
 library(tidyr)
 
+# one liner
+table(jez$gen.pov, jez$spol) %>% addmargins(2) %>% prop.table(2) %>% round(2)
 
 # nova superkul TODODO! ----
-frre_by <- function(redak, stupac, N = FALSE, df = FALSE, digits = 2, bar = FALSE) {
-  t1 <- table(redak, stupac) # osnovna tablica
-  t1.prop <- prop.table(t1, margin = 2) # postoci stupca 
-  t1.prop <- round(t1.prop, digits = digits)
-  t2 <- table(redak,
-              rep(1, times = length(redak)))
-  t2.prop <- prop.table(t2, margin = 2)
-  t2.prop <- round(t2.prop, digits = digits)
-  tt <- cbind(t2.prop, t1.prop)
-  dimnames(tt)[[2]][1] <- "Uzorak"
-  tt.df <- as.data.frame.matrix(tt)
-  knitr::kable(tt.df)
-}
-# ----
+frre_by <- function(redak, stupac, 
+                    digits = 2,  n = FALSE, long = FALSE, bar = FALSE) {
+  t2 <- table(redak, stupac) # osnovna tablica
+  t2.marg <- addmargins(t2, margin = 2)
+  t2.prop <- prop.table(t2.marg, margin = 2)  # tu je sve potrebno...
+  t2.df <- as.data.frame.matrix(t2.prop) # dalje je rearrange
 
+  dulj <- seq(1, length(t2.df) - 1)      # sve osim zadnjeg elementa
+  t2.df.arr <- data.frame(Uzorak = t2.df$Sum,
+                          t2.df[dulj]
+  )
+  # kable(t2.df.arr, digits = 2)
+
+  print(kable(t2.df, digits = digits))
+
+  # opcionalni N-ovi
+  if (N) {
+    tdim <- addmargins(t2)
+    tdim[nrow(tdim),]
+  }
+  
+  # vraća DF pogodan za ggplottanje # OK
+  if (long) {
+    t2.long <- t2.df
+    # t2.long <- t2.df.arr
+    t2.long$kategorije <- factor(rownames(t2.long), levels = rownames(t2.long))
+    rownames(t2.long) <- NULL
+    gather_vars <- names(t2.long)[-length(names(t2.long))]
+    tplot.long <- gather_(t2.long, "legenda", "udio", gather_vars, factor_key = TRUE)
+    return(tplot.long)
+  }
+  
+  # opcionalni bar
+  if (bar) {
+    t2.plot <- t2.df
+    # t2.plot <- t2.df.arr
+    t2.plot$kategorije <- factor(rownames(t2.plot), levels = rownames(t2.plot))
+    rownames(t2.plot) <- NULL
+    gather_vars <- names(t2.plot)[-length(names(t2.plot))]
+    t2.plot.long <- gather_(t2.plot, "legenda", "udio", gather_vars, factor_key = TRUE)
+    ggplot(t2.plot.long, aes(x = kategorije, y = udio, fill = legenda)) +
+    geom_bar(stat = "identity", position = "dodge")
+  }
+}
+
+
+# testiranje / primjeri
+frre_by(jez$seljenje, jez$spol)
+
+
+
+# ----
 
 # podaci ----
 jez <- jezgra %>% transmute(
@@ -30,6 +71,51 @@ jez <- jezgra %>% transmute(
 # ----
 
 # prototip ----
+# prototip 2
+t2 <- table(jez$gen.pov, jez$spol) # osnovna tablica
+t2.marg <- addmargins(t2, margin = 2)
+t2.prop <- prop.table(t2.marg, margin = 2)  # tu je sve potrebno...
+t2.df <- as.data.frame.matrix(t2.prop) # dalje je rearrange
+
+dulj <- seq(1, length(t2.df) - 1)      # sve osim zadnjeg elementa
+t2.df.arr <- data.frame(Uzorak = t2.df$Sum,
+                    t2.df[dulj]
+)
+# kable(t2.df.arr, digits = 2)
+
+kable(t2.df, digits = 2)
+
+
+df <- TRUE
+# vraća DF pogodan za ggplottanje # OK
+if (df) {
+  t2.tidy <- t2.df
+  # t2.tidy <- t2.df.arr
+  t2.tidy$kategorije <- factor(rownames(t2.tidy), levels = rownames(t2.tidy))
+  rownames(t2.tidy) <- NULL
+  return(t2.tidy)
+  }
+
+N <- TRUE
+if (N) {
+  tdim <- addmargins(t2)
+  tdim[nrow(tdim),]
+}
+
+bar <- TRUE # OK
+if (bar) {
+  t2.plot <- t2.df
+  # t2.plot <- t2.df.arr
+  t2.plot$kategorije <- factor(rownames(t2.plot), levels = rownames(t2.plot))
+  rownames(t2.plot) <- NULL
+  gather_vars <- names(t2.plot)[-length(names(t2.plot))]
+  t2.plot.long <- gather_(t2.plot, "legenda", "udio", gather_vars, factor_key = TRUE)
+  ggplot(t2.plot.long, aes(x = kategorije, y = udio, fill = legenda)) +
+    geom_bar(stat = "identity", position = "dodge")
+  }
+# ----
+
+# prvi prototip za frre_by - obsolete ----
 t1 <- table(jez$gen.pov, jez$spol) # osnovna tablica
 t1.prop <- prop.table(t1, margin = 2) # postoci stupca 
 t1.prop <- round(t1.prop, digits = 2)
@@ -41,28 +127,7 @@ tt <- cbind(t2.prop, t1.prop)
 dimnames(tt)[[2]][1] <- "Uzorak"
 tt.df <- as.data.frame.matrix(tt)
 kable(tt.df)
-
-df <- TRUE
-# return tidy DF  # radi ali testiraj
-if (df) {
-  tt.tidy <- tt.df
-  tt.tidy$Kategorije <- factor(rownames(tt.tidy), levels = rownames(tt.tidy))
-  rownames(tt.tidy) <- NULL
-  return(tt.tidy)
-  }
-
-if (N) {} # implementiraj!!!
-
-bar <- TRUE # debugiraj
-if (bar) {
-  tt.df$Kategorije <- factor(rownames(tt.df), levels = rownames(tt.df))
-  rownames(tt.df) <- NULL
-  gather_vars <- names(tt.df)[-length(names(tt.df))]
-  tt.df.gather <- gather_(tt.df, "legenda", "udio", gather_vars, factor_key = TRUE)
-  ggplot(aes(x = Kategorije, y = udio, fill = legenda)) +
-    geom_bar(stat = "identity", position = "dodge")
-  }
-# ----
+# ====
 
 # STARA dobra tblca ----
 tblca <- function (redak, stupac, file = "") {
