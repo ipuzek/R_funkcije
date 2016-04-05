@@ -63,8 +63,15 @@ frre.factor <- function (x, varLabDuljina = 40, valLabDuljina = 35,
     varlab <- ime
     if (varLabDuljina == 40) varLabDuljina <- 200
   }
+  
   nejm <- deparse(substitute(x))
+  
+  if (!identical(levels(x), 
+                 levels(droplevels(x)))) warning("levels dropped", call. = FALSE)
+  
   levels(x) <- strtrim(levels(x), valLabDuljina)
+  x <- droplevels(x)
+  
   gnjec.df <- merge.data.frame(as.data.frame(table(x)),
                                as.data.frame(prop.table(table(x))),
                                by = "x", sort = FALSE)

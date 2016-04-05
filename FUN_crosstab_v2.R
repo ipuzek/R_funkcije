@@ -1,6 +1,4 @@
 # rekreirati SPSS ###
-library(dplyr)
-library(labelled)
 library(knitr)
 library(ggplot2)
 library(tidyr)
@@ -9,13 +7,23 @@ library(tidyr)
 table(jez$gen.pov, jez$spol) %>% addmargins(2) %>% prop.table(2) %>% round(2)
 
 # nova superkul TODODO! ----
-frre_by <- function(redak, stupac, 
-                    digits = 2,  n = FALSE, long = FALSE, bar = FALSE) {
-  t2 <- table(redak, stupac) # osnovna tablica
+frre_by <- function(redak, stupac, useNA = c("no", "ifany", "always"),
+                    digits = 2,  N = FALSE, long = FALSE, bar = FALSE) {
+  
+  if (is.factor(redak) & is.factor(stupac)) {
+    if (!identical(levels(redak), 
+                 levels(droplevels(redak)))) cat("redak levels dropped")
+    if (!identical(levels(stupac), 
+                 levels(droplevels(stupac)))) cat("stupac levels dropped")
+    redak <- droplevels(redak); stupac <- droplevels(stupac)
+  }
+  
+  t2 <- table(redak, stupac, useNA = useNA) # osnovna tablica
   t2.marg <- addmargins(t2, margin = 2)
   t2.prop <- prop.table(t2.marg, margin = 2)  # tu je sve potrebno...
-  t2.df <- as.data.frame.matrix(t2.prop) # dalje je rearrange
-
+  t2.df <- as.data.frame.matrix(t2.prop)
+  rownames(t2.df)[is.na(rownames(t2.df))] <- "NA" # dalje je rearrange
+  
   dulj <- seq(1, length(t2.df) - 1)      # sve osim zadnjeg elementa
   t2.df.arr <- data.frame(Uzorak = t2.df$Sum,
                           t2.df[dulj]
@@ -24,13 +32,16 @@ frre_by <- function(redak, stupac,
 
   print(kable(t2.df, digits = digits))
 
-  # opcionalni N-ovi
+  # N
   if (N) {
     tdim <- addmargins(t2)
-    tdim[nrow(tdim),]
+    if (any(is.na(rownames(tdim)))) {
+      print(tdim[c(nrow(tdim), nrow(tdim) - 1),]) } else {
+        print(tdim[nrow(tdim),])
+      }
   }
   
-  # vraća DF pogodan za ggplottanje # OK
+  # vraća DF pogodan za ggplottanje
   if (long) {
     t2.long <- t2.df
     # t2.long <- t2.df.arr
@@ -41,7 +52,7 @@ frre_by <- function(redak, stupac,
     return(tplot.long)
   }
   
-  # opcionalni bar
+  # bar
   if (bar) {
     t2.plot <- t2.df
     # t2.plot <- t2.df.arr
@@ -55,36 +66,71 @@ frre_by <- function(redak, stupac,
 }
 
 
-# testiranje / primjeri
-frre_by(jez$seljenje, jez$spol)
-
-
-
-# ----
+# testiranje / primjeri -----------------------------
+frre_by(mtcars$cyl, mtcars$vs)
+frre_by(mtcars$cyl, mtcars$am, N = TRUE, bar = TRUE)
+# missinzi u recima
+mtcars$cylNA <- mtcars$cyl; mtcars$cylNA[mtcars$cylNA == 8] <- NA
+frre_by(mtcars$cylNA, mtcars$am, N = TRUE, bar = TRUE) # default bez missinga
+frre_by(mtcars$cylNA, mtcars$am, useNA = "ifany", N = TRUE, bar = TRUE) # miss
+# missinzi u stupcima
+frre_by(mtcars$am, mtcars$cylNA, useNA = "ifany")
+frre_by(mtcars$am, mtcars$cylNA, useNA = "ifany", N = TRUE, bar = TRUE)
 
 # podaci ----
+library(dplyr); library(labelled)
+source("R/FUN_frre.R")
 jez <- jezgra %>% transmute(
   gen.pov = factor(vrij6, labels = c("Vjerovati", "Oprez", "NZ", "BO")),
   seljenje = factor(qol3, labels = c("Ne", "Split", "Dalmacija", "Hrvatska", "Izvan Hrvatske", "NZBO")),
   spol = as_factor(dmg1),
   zad.kvart = qol7 )
-# ----
+
+frre(jezgra$vrij6); frre(jez$gen.pov); frre(jez$spol)
+frre_by(jez$gen.pov, jez$spol, N = TRUE, bar = TRUE)
+frre_by(jez$seljenje, jez$gen.pov, digits = 3, N = TRUE, bar = TRUE)
+
+# missing stupac
+jez$gen.povNA <- jez$gen.pov
+jez$gen.povNA[jez$gen.povNA == "NZ"] <- NA ; jez$gen.povNA[jez$gen.povNA == "BO"] <- NA
+frre(jez$gen.povNA, N = TRUE)
+frre_by(jez$seljenje, jez$gen.povNA, digits = 3, N = TRUE, bar = TRUE)
+
+# missing redak i stupac
+jez$seljenjeNA <- jez$seljenje
+jez$seljenjeNA[jez$seljenjeNA == "NZBO"] <- NA
+frre_by(jez$seljenjeNA, jez$gen.povNA, digits = 3, N = TRUE, bar = TRUE)
+
+
+# ====
 
 # prototip ----
 # prototip 2
-t2 <- table(jez$gen.pov, jez$spol) # osnovna tablica
+
+mtcars$cylNA <- mtcars$cyl; mtcars$cylNA[mtcars$cylNA == 8] <- NA
+mtcars$cyl.fac <- as.factor(mtcars$cyl)
+mtcars$cyl.facNA <- mtcars$cyl.fac
+mtcars$cyl.facNA[mtcars$cyl.facNA == 8] <- NA
+summary(mtcars$cyl.facNA)
+
+if (!identical(levels(redak), 
+               levels(droplevels(redak)))) warning("levels dropped")
+if (!identical(levels(stupac), 
+               levels(droplevels(stupac)))) warning("levels dropped")
+redak <- droplevels(redak); stupac <- droplevels(stupac)
+
+t2 <- table(mtcars$cylNA, mtcars$am, useNA = "ifany") # osnovna tablica
 t2.marg <- addmargins(t2, margin = 2)
 t2.prop <- prop.table(t2.marg, margin = 2)  # tu je sve potrebno...
-t2.df <- as.data.frame.matrix(t2.prop) # dalje je rearrange
+t2.df <- as.data.frame.matrix(t2.prop) 
+rownames(t2.df)[is.na(rownames(t2.df))] <- "NA" # dalje je rearrange
 
-dulj <- seq(1, length(t2.df) - 1)      # sve osim zadnjeg elementa
-t2.df.arr <- data.frame(Uzorak = t2.df$Sum,
-                    t2.df[dulj]
-)
+# dulj <- seq(1, length(t2.df) - 1)      # sve osim zadnjeg elementa
+# t2.df.arr <- data.frame(Uzorak = t2.df$Sum,
+#                     t2.df[dulj] )
 # kable(t2.df.arr, digits = 2)
 
 kable(t2.df, digits = 2)
-
 
 df <- TRUE
 # vraća DF pogodan za ggplottanje # OK
@@ -99,7 +145,10 @@ if (df) {
 N <- TRUE
 if (N) {
   tdim <- addmargins(t2)
-  tdim[nrow(tdim),]
+  if (any(is.na(rownames(tdim)))) {
+    tdim[c(nrow(tdim), nrow(tdim) - 1),] } else {
+      print(tdim[nrow(tdim),])
+    }
 }
 
 bar <- TRUE # OK
