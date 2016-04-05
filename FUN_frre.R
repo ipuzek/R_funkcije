@@ -1,4 +1,4 @@
-# frre - dispatch method fensijana totalna
+# rekreirati SPSS-ov FREQUENCIES
 
 frre <- function(x,...){
   UseMethod("frre")
@@ -66,7 +66,7 @@ frre.factor <- function (x, varLabDuljina = 40, valLabDuljina = 35,
   
   nejm <- deparse(substitute(x))
   
-  if (!identical(levels(x), 
+  if (!identical(levels(x), # defanzivno programiranje
                  levels(droplevels(x)))) warning("levels dropped", call. = FALSE)
   
   levels(x) <- strtrim(levels(x), valLabDuljina)
@@ -138,7 +138,7 @@ frre.numeric <- function (x, varLabDuljina = 40, ime="",
 }
 
 # PRIMJERI # numeric ----
-# frre(mtcars$cyl, prosjek = TRUE, moj_summary = TRUE)
+# frre(mtcars$cyl, prosjek = TRUE)
 # frre(diamonds$carat, prosjek = TRUE) # bzvz
 # hist(diamonds$carat); summary(diamonds$carat) # klasika je bolja
 # ====
