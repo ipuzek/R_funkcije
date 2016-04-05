@@ -1,37 +1,31 @@
-# rekreirati SPSS ###
-library(knitr)
-library(ggplot2)
-library(tidyr)
+# rekreirati SPSS-ove crosstable ###
 
-# one liner
-table(jez$gen.pov, jez$spol) %>% addmargins(2) %>% prop.table(2) %>% round(2)
-
-# nova superkul TODODO! ----
 frre_by <- function(redak, stupac, useNA = c("no", "ifany", "always"),
-                    digits = 2,  N = FALSE, long = FALSE, bar = FALSE) {
+                    digits = 2, N = FALSE, long = FALSE, bar = FALSE, ...) {
   
   if (is.factor(redak) & is.factor(stupac)) {
     if (!identical(levels(redak), 
-                 levels(droplevels(redak)))) cat("redak levels dropped")
+                 levels(droplevels(redak)))) warning("redak levels dropped", call. = FALSE)
     if (!identical(levels(stupac), 
-                 levels(droplevels(stupac)))) cat("stupac levels dropped")
+                 levels(droplevels(stupac)))) warning("stupac levels dropped", call. = FALSE)
     redak <- droplevels(redak); stupac <- droplevels(stupac)
   }
   
   t2 <- table(redak, stupac, useNA = useNA) # osnovna tablica
   t2.marg <- addmargins(t2, margin = 2)
   t2.prop <- prop.table(t2.marg, margin = 2)  # tu je sve potrebno...
-  t2.df <- as.data.frame.matrix(t2.prop)
-  rownames(t2.df)[is.na(rownames(t2.df))] <- "NA" # dalje je rearrange
   
-  dulj <- seq(1, length(t2.df) - 1)      # sve osim zadnjeg elementa
+  t2.df <- as.data.frame.matrix(t2.prop)      # ...mali housekeeping...
+  rownames(t2.df)[is.na(rownames(t2.df))] <- "NA" 
+  
+  dulj <- seq(1, length(t2.df) - 1)      # ...dalje je rearrange
   t2.df.arr <- data.frame(Uzorak = t2.df$Sum,
                           t2.df[dulj]
   )
+  
   # kable(t2.df.arr, digits = 2)
-
-  print(kable(t2.df, digits = digits))
-
+  # print(kable(t2.df, digits = digits, ...))
+  
   # N
   if (N) {
     tdim <- addmargins(t2)
@@ -61,51 +55,56 @@ frre_by <- function(redak, stupac, useNA = c("no", "ifany", "always"),
     gather_vars <- names(t2.plot)[-length(names(t2.plot))]
     t2.plot.long <- gather_(t2.plot, "legenda", "udio", gather_vars, factor_key = TRUE)
     ggplot(t2.plot.long, aes(x = kategorije, y = udio, fill = legenda)) +
-    geom_bar(stat = "identity", position = "dodge")
-  }
+      geom_bar(stat = "identity", position = "dodge")
+  }  else t2.df
+  
 }
 
 
-# testiranje / primjeri -----------------------------
-frre_by(mtcars$cyl, mtcars$vs)
-frre_by(mtcars$cyl, mtcars$am, N = TRUE, bar = TRUE)
+# testiranje / primjeri / mtcars -----------------------------
+frre_by(mtcars$cyl, mtcars$vs) %>% kable
+frre_by(mtcars$cyl, mtcars$vs, N = TRUE) %>% kable
+frre_by(mtcars$cyl, mtcars$vs, long = TRUE) 
+frre_by(mtcars$cyl, mtcars$vs, bar = TRUE)
+
 # missinzi u recima
 mtcars$cylNA <- mtcars$cyl; mtcars$cylNA[mtcars$cylNA == 8] <- NA
+frre_by(mtcars$cylNA, mtcars$am) %>% kable
 frre_by(mtcars$cylNA, mtcars$am, N = TRUE, bar = TRUE) # default bez missinga
 frre_by(mtcars$cylNA, mtcars$am, useNA = "ifany", N = TRUE, bar = TRUE) # miss
 # missinzi u stupcima
-frre_by(mtcars$am, mtcars$cylNA, useNA = "ifany")
+frre_by(mtcars$am, mtcars$cylNA, useNA = "ifany") %>% kable
 frre_by(mtcars$am, mtcars$cylNA, useNA = "ifany", N = TRUE, bar = TRUE)
+# ====
 
-# podaci ----
+# testiranje / primjeri / jezgra -----------------------------
 library(dplyr); library(labelled)
-source("R/FUN_frre.R")
 jez <- jezgra %>% transmute(
   gen.pov = factor(vrij6, labels = c("Vjerovati", "Oprez", "NZ", "BO")),
   seljenje = factor(qol3, labels = c("Ne", "Split", "Dalmacija", "Hrvatska", "Izvan Hrvatske", "NZBO")),
   spol = as_factor(dmg1),
   zad.kvart = qol7 )
 
-frre(jezgra$vrij6); frre(jez$gen.pov); frre(jez$spol)
 frre_by(jez$gen.pov, jez$spol, N = TRUE, bar = TRUE)
-frre_by(jez$seljenje, jez$gen.pov, digits = 3, N = TRUE, bar = TRUE)
+frre_by(jez$seljenje, jez$gen.pov, digits = 3, N = TRUE) %>% kable()
 
-# missing stupac
+# makni sve NA-ove iz prošle verzije # missing redak i stupac
 jez$gen.povNA <- jez$gen.pov
 jez$gen.povNA[jez$gen.povNA == "NZ"] <- NA ; jez$gen.povNA[jez$gen.povNA == "BO"] <- NA
-frre(jez$gen.povNA, N = TRUE)
-frre_by(jez$seljenje, jez$gen.povNA, digits = 3, N = TRUE, bar = TRUE)
-
-# missing redak i stupac
 jez$seljenjeNA <- jez$seljenje
 jez$seljenjeNA[jez$seljenjeNA == "NZBO"] <- NA
-frre_by(jez$seljenjeNA, jez$gen.povNA, digits = 3, N = TRUE, bar = TRUE)
+frre_by(jez$seljenjeNA, jez$gen.povNA, digits = 3, bar = TRUE)
 
-
+# bzvez je defaultni graf, ajmo drukči
+frre_by(jez$seljenjeNA, jez$gen.povNA, long = TRUE) %>%
+  filter(legenda != "Sum") %>%
+  ggplot(aes(x = kategorije, y = udio, fill = legenda)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_hline(aes(yintercept = .5), colour = "grey")
 # ====
 
-# prototip ----
-# prototip 2
+
+# prototip 2 -----------------------
 
 mtcars$cylNA <- mtcars$cyl; mtcars$cylNA[mtcars$cylNA == 8] <- NA
 mtcars$cyl.fac <- as.factor(mtcars$cyl)
@@ -162,7 +161,7 @@ if (bar) {
   ggplot(t2.plot.long, aes(x = kategorije, y = udio, fill = legenda)) +
     geom_bar(stat = "identity", position = "dodge")
   }
-# ----
+# ====
 
 # prvi prototip za frre_by - obsolete ----
 t1 <- table(jez$gen.pov, jez$spol) # osnovna tablica
@@ -178,7 +177,7 @@ tt.df <- as.data.frame.matrix(tt)
 kable(tt.df)
 # ====
 
-# STARA dobra tblca ----
+# STARA dobra tblca zastarjela je malo ---- 
 tblca <- function (redak, stupac, file = "") {
   t1 <- table(redak, stupac) # osnovna tablica
   t1.prop <- prop.table(t1, 2)
@@ -193,7 +192,7 @@ tblca <- function (redak, stupac, file = "") {
   print(druga.round) # ispiši
   if (length(file) > 1) write.csv2(druga.round, file) # zapiši
 }
-# ----
+# ====
 
 
 # =======================================
