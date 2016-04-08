@@ -14,7 +14,7 @@ frre.labelled <- function (x, varLabDuljina = 40, valLabDuljina = 35, ime="",
     }
   if (identical(varlab, attributes(x)[["labels"]]))
     stop("vaR lab i vaL lab su isti - vjerojatno nepostojeći")
-  lejbld <- labelled::as_factor(x, levels = "prefixed", sort_levels = "values")
+  lejbld <- labelled::to_factor(x, levels = "prefixed", sort_levels = "values")
   levels(lejbld) <- strtrim(levels(lejbld), valLabDuljina)
   gnjec.df <- merge.data.frame(as.data.frame(table(lejbld)),
                                as.data.frame(prop.table(table(lejbld))),
@@ -94,7 +94,7 @@ frre.factor <- function (x, varLabDuljina = 40, valLabDuljina = 35,
 
 # PRIMJERI # factor ----
 # s1 <- labelled(c("M", "M", "F"), c(Male = "M", Female = "F"))
-# s1f <- labelled::as_factor(s1)
+# s1f <- labelled::to_factor(s1)
 # frre(s1); frre(s1f)
 # #
 # frre(diamonds$cut, ime = "Cut of the diamonds", N = TRUE)

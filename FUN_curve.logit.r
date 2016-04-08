@@ -15,9 +15,11 @@ curve.logit <- function(x, model, vrijednost) {
 # in a nutshell: stat_function(fun = curve.logit, args = list(model = XXX, vrijednost = XXX))
 
 
-primjer korištenja : stari.logit
+# primjer korištenja : stari.logit:
+
 ## usporedba logit i probit (ggplot) vs logit (moja custom funkcija)
 ## vidi se i zašto je nepotrebna, ali možda dobro dođe jednom
+
 # library(ggplot2)
 # privremeni.model <- glm(vs ~ mpg, data = mtcars, family = binomial(link = "logit"))
 # ggplot(mtcars, aes(x=mpg, y=vs)) + geom_point() +
@@ -30,7 +32,8 @@ primjer korištenja : stari.logit
 #   stat_function(fun = stari.logit, args = list(model = privremeni.model))
 
 
-primjer korištenja : curve.logit
+# primjer korištenja : curve.logit
+
 # tmp.model <- glm(vs ~ mpg + cyl, data = mtcars, family = binomial)
 # ggplot(mtcars, aes(x=mpg, y=vs)) + geom_point() +
 #   stat_function(colour = "red", fun = curve.logit, args = list(model = tmp.model, vrijednost = 4)) +
