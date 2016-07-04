@@ -6,15 +6,22 @@ frre <- function(x,...){
 
 # labelled ----
 frre.labelled <- function (x, varLabDuljina = 40, valLabDuljina = 35, ime="", 
-                           N = FALSE, kablica = TRUE, digits = 2, ...) {
+                           N = TRUE, drop = TRUE, kablica = TRUE, digits = 2, ...) {
+  
   varlab <- attributes(x)[["label"]]
+  
   if (nchar(ime) > 0) {
     varlab <- ime
     if (varLabDuljina == 40) varLabDuljina <- 200
     }
+  
   if (identical(varlab, attributes(x)[["labels"]]))
     stop("vaR lab i vaL lab su isti - vjerojatno nepostojeći")
-  lejbld <- labelled::to_factor(x, levels = "prefixed", sort_levels = "values")
+  
+  if (drop) {
+    lejbld <- droplevels(labelled::to_factor(x, levels = "prefixed", sort_levels = "values"))
+  } else { lejbld <- labelled::to_factor(x, levels = "prefixed", sort_levels = "values")
+    }
   levels(lejbld) <- strtrim(levels(lejbld), valLabDuljina)
   gnjec.df <- merge.data.frame(as.data.frame(table(lejbld)),
                                as.data.frame(prop.table(table(lejbld))),
@@ -57,7 +64,7 @@ frre.labelled <- function (x, varLabDuljina = 40, valLabDuljina = 35, ime="",
 
 # factor v 2 ----
 frre.factor <- function (x, varLabDuljina = 40, valLabDuljina = 35, 
-                         ime="", N = FALSE, kablica = TRUE, ...) {
+                         ime="", N = TRUE, kablica = TRUE, ...) {
   varlab <- attributes(x)[["label"]]
   if (nchar(ime) > 0) {
     varlab <- ime
