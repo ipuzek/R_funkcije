@@ -5,32 +5,49 @@ frre <- function(x,...){
 } 
 
 # labelled ----
-frre.labelled <- function (x, varLabDuljina = 40, valLabDuljina = 35, ime="", 
-                           N = TRUE, drop = TRUE, kablica = TRUE, digits = 2, ...) {
+frre.labelled <- function (x, lab.duljina = 40, ime="", 
+                           N = TRUE, 
+                           levels = "prefixed", sort_levels = "auto", drop = TRUE, 
+                           kablica = TRUE, digits = 2, ...) {
   
   varlab <- attributes(x)[["label"]]
   
-  if (nchar(ime) > 0) {
+  if (nchar(ime) > 0 ) {
     varlab <- ime
-    if (varLabDuljina == 40) varLabDuljina <- 200
-    }
+    if (lab.duljina == 40) lab.duljina <- 200
+  }
   
-  if (identical(varlab, attributes(x)[["labels"]]))
+  if (identical(varlab, attributes(x)[["labels"]])) {
     stop("vaR lab i vaL lab su isti - vjerojatno nepostojeći")
+  }
   
-  if (drop) {
-    lejbld <- droplevels(labelled::to_factor(x, levels = "prefixed", sort_levels = "values"))
-  } else { lejbld <- labelled::to_factor(x, levels = "prefixed", sort_levels = "values")
+  
+  
+  lejbld <- labelled::to_factor(x, levels = levels, 
+                                sort_levels = sort_levels, 
+                                drop_unused_labels = drop)
+
+  levels(lejbld) <- strtrim(levels(lejbld), lab.duljina - 3)
+  
+  if (drop && !identical(
+      levels(to_factor(x)),
+      levels(to_factor(x, drop_unused_labels = TRUE))
+    )) {
+    no_of_dropped <- 
+      length(levels(to_factor(x))) - length(levels(to_factor(x, drop_unused_labels = TRUE)))
+    warning(paste(no_of_dropped, "level(s) dropped"), call. = FALSE)
     }
-  levels(lejbld) <- strtrim(levels(lejbld), valLabDuljina)
+  
   gnjec.df <- merge.data.frame(as.data.frame(table(lejbld)),
                                as.data.frame(prop.table(table(lejbld))),
                                by = "lejbld", sort = FALSE)
+  
   if (!is.null(varlab)) {
-    names(gnjec.df)[1] <- strtrim(varlab, varLabDuljina)
+    names(gnjec.df)[1] <- strtrim(varlab, lab.duljina)
     } else names(gnjec.df)[1] <- deparse(substitute(x))
   names(gnjec.df)[2] <- "Counts"
   names(gnjec.df)[3] <- "Percents"
+  
   if (N) {
     cat("valid =", sum(!is.na(x)),
               " missing =", sum(is.na(x)))
@@ -39,79 +56,86 @@ frre.labelled <- function (x, varLabDuljina = 40, valLabDuljina = 35, ime="",
     knitr::kable(gnjec.df, digits = digits, ...)
     } else {
     gnjec.df$Percents <- round(gnjec.df$Percents * 100)
-    return(gnjec.df) 
+    gnjec.df
     }
   }
 
-# PRIMJERI # labelled ----
+
+# LABELLED primjeri --------------------------------------------------------
 # s1 <- labelled(c("M", "M", "F"), c(Male = "M", Female = "F"))
 # s2 <- labelled(c(1, 1, 2), c(Male = 1, Female = 2))
-# label(s2) <- "A vector to label. Must be either numeric or character."
+# var_label(s2) <- "A vector to label. Must be either numeric or character."
 # 
-# frre(s1)
-# frre(s2, var = 60) # duže ime
-# frre(s2, # custom ime ostaje dugo
+# frre(s2)
+# frre(s2, lab.duljina = 60) # duže ime
+# frre(s1, # custom ime ostaje dugo
 #      ime = "when coercing a labelled character vector to a factor")
-# frre(s1, var = 10, # ...ostaje dugo ako se ne specifira non-default
-#      ime = "when coercing a labelled character vector to a factor") 
-# frre(s1, N = TRUE)
-# frre(s2, kablica = FALSE) # ružno, ali ima svojih čari
-# frre(jezgra$vrij6, digits = 3) # TODO treba implementirati
-#                                # defaultni argument koji se može mijenjati u kable
-# frre(jezgra$vrij6, 
-#      caption = "naslov koji se ne vidi, ali je valjda tu") # argument proslijeđen u kable
-# ====
+# frre(s1, lab.duljina = 10, # ...ostaje dugo ako se ne specifira non-default
+#      ime = "when coercing a labelled character vector to a factor")
+# frre(s2, N = FALSE)
+# frre(s1, N = FALSE, kablica = FALSE) # ružno, ali ima svojih čari
+# frre(s1, digits = 3) # digits : proslijeđen u kable, def = 2
+# frre(s2,  # argument proslijeđen u kable /// ne printa se u konzoli
+#      caption = "naslov koji se ne vidi, ali je valjda tu") 
 
-# factor v 2 ----
-frre.factor <- function (x, varLabDuljina = 40, valLabDuljina = 35, 
-                         ime="", N = TRUE, kablica = TRUE, ...) {
+
+frre.factor <- function (x, lab.duljina = 40, ime="", 
+                         N = TRUE, drop = TRUE, kablica = TRUE, digits = 2, ...) {
+  
   varlab <- attributes(x)[["label"]]
+  
   if (nchar(ime) > 0) {
     varlab <- ime
-    if (varLabDuljina == 40) varLabDuljina <- 200
+    if (lab.duljina == 40) lab.duljina <- 200
+  }
+  
+  if (drop && !identical(levels(x), levels(droplevels(x)))) {
+    no_of_dropped <- 
+      length(levels(x)) - length(levels(droplevels(x)))
+    warning(paste(no_of_dropped, "level(s) dropped"), call. = FALSE)
   }
   
   nejm <- deparse(substitute(x))
   
-  if (!identical(levels(x), # defanzivno programiranje
-                 levels(droplevels(x)))) warning("levels dropped", call. = FALSE)
-  
-  levels(x) <- strtrim(levels(x), valLabDuljina)
-  x <- droplevels(x)
+  if (drop) x <- droplevels(x)
+  levels(x) <- strtrim(levels(x), lab.duljina - 3)
   
   gnjec.df <- merge.data.frame(as.data.frame(table(x)),
                                as.data.frame(prop.table(table(x))),
                                by = "x", sort = FALSE)
+  
   if (!is.null(varlab)) {
-    names(gnjec.df)[1] <- strtrim(varlab, varLabDuljina)
-  } else names(gnjec.df)[1] <- nejm
+    names(gnjec.df)[1] <- strtrim(varlab, lab.duljina)
+  } else {
+    names(gnjec.df)[1] <- nejm
+  }
   names(gnjec.df)[2] <- "Counts"
   names(gnjec.df)[3] <- "Percents"
   if (N) {
     cat("valid =", sum(!is.na(x)),
         " missing =", sum(is.na(x)))
   }
+  
   if (kablica) {
-    knitr::kable(gnjec.df, digits = 2, ...)
+    knitr::kable(gnjec.df, digits = digits, ...)
   } else {
     gnjec.df$Percents <- round(gnjec.df$Percents * 100)
-    return(gnjec.df) 
+    gnjec.df
   }
 }
 
 # PRIMJERI # factor ----
 # s1 <- labelled(c("M", "M", "F"), c(Male = "M", Female = "F"))
-# s1f <- labelled::to_factor(s1)
-# frre(s1); frre(s1f)
-# #
-# frre(diamonds$cut, ime = "Cut of the diamonds", N = TRUE)
-# #
-# jezgra$obraz <- recode(jezgra$dmg3, " 1:3 = 1; 4:5 = 2; 6:9 = 3; 98 = NA")
-# jezgra$obraz %<>% factor(labels = c("Osnovna", "Srednja", "Visoka")) 
-# # NE OVAKO label(jezgra$obraz) <- label(jezgra$dmg3) ### NI OVAKO label(jezgra$obraz) <- "obrazovanje ispitanika"
-# attributes(jezgra$obraz)[["label"]] <- attributes(jezgra$dmg3)[["label"]] # OK
-# frre(jezgra$obraz, var = 30)
+# s1f <- to_factor(s1)
+# var_label(s1f) <- "neko izrazito dugačko i nespretno ime velike dužine"
+# frre(s1f)
+# 
+# sx <- to_factor(scopes.2015$p38)
+# frre(sx, drop = TRUE)
+# 
+# frre(diamonds$cut, ime = "Cut of the diamonds", N = FALSE)
 # ====
+
 
 # numeric ----
 frre.numeric <- function (x, varLabDuljina = 40, ime="", 
@@ -140,7 +164,7 @@ frre.numeric <- function (x, varLabDuljina = 40, ime="",
     knitr::kable(gnjec.df, digits = 2, ...)
   } else {
     gnjec.df$Percents <- round(gnjec.df$Percents * 100)
-    return(gnjec.df) 
+    gnjec.df
   }
 }
 
