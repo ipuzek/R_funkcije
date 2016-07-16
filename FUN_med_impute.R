@@ -22,8 +22,8 @@ med_impute.character <- function(x) {
     stop("intervali nisu u rastućem nizu")
   }
   
-  print(lower) # ovo zakomentiraj nakon malo dužeg testiranja
-  print(upper)
+  #print(lower) # ovo zakomentiraj nakon malo dužeg testiranja
+  #print(upper)
   
   add.to.lower <- unique(upper - lower) / 2
   
@@ -66,8 +66,8 @@ med_impute.ordered <- function(x) {
     stop("intervali nisu u rastućem nizu")
   }
   
-  print(lower) # ovo zakomentiraj nakon malo dužeg testiranja
-  print(upper)
+  #print(lower) # ovo zakomentiraj nakon malo dužeg testiranja
+  #print(upper)
   
   add.to.lower <- unique(upper - lower) / 2
   
