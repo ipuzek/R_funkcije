@@ -13,8 +13,8 @@ med_impute.character <- function(x) {
   
   nejmz.brojke <- str_extract_all(unique(x), "[0-9]+")
   
-  lower <- lapply(nejmz.brojke, function(x) x[1]) %>% unlist %>% as.numeric()
-  upper <- lapply(nejmz.brojke, function(x) x[2]) %>% unlist %>% as.numeric()
+  lower <- purrr::map(nejmz.brojke, 1) %>% purrr::map_dbl(as.numeric)
+  upper <- purrr::map(nejmz.brojke, 2) %>% purrr::map_dbl(as.numeric)
   
   if (is.unsorted(lower) || (is.unsorted(upper))) {
     print(lower)
@@ -57,8 +57,8 @@ med_impute.ordered <- function(x) {
   
   nejmz.brojke <- str_extract_all(levels(x), "[0-9]+")
   
-  lower <- lapply(nejmz.brojke, function(x) x[1]) %>% unlist %>% as.numeric()
-  upper <- lapply(nejmz.brojke, function(x) x[2]) %>% unlist %>% as.numeric()
+  lower <- purrr::map(nejmz.brojke, 1) %>% purrr::map_dbl(as.numeric)
+  upper <- purrr::map(nejmz.brojke, 2) %>% purrr::map_dbl(as.numeric)
   
   if (is.unsorted(lower) || (is.unsorted(upper))) {
     print(lower)
