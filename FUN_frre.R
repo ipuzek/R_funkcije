@@ -4,7 +4,9 @@ frre <- function(x,...){
   UseMethod("frre")
 } 
 
-# labelled ----
+
+# labelled ----------------------------------------------------------------
+
 frre.labelled <- function (x, lab.duljina = 40, ime="", 
                            N = TRUE, 
                            levels = "prefixed", sort_levels = "auto", drop = TRUE, 
@@ -61,7 +63,9 @@ frre.labelled <- function (x, lab.duljina = 40, ime="",
   }
 
 
-# LABELLED primjeri --------------------------------------------------------
+
+# LABELLED primjeri -------------------------------------------------------
+
 # s1 <- labelled(c("M", "M", "F"), c(Male = "M", Female = "F"))
 # s2 <- labelled(c(1, 1, 2), c(Male = 1, Female = 2))
 # var_label(s2) <- "A vector to label. Must be either numeric or character."
@@ -78,6 +82,8 @@ frre.labelled <- function (x, lab.duljina = 40, ime="",
 # frre(s2,  # argument proslijeđen u kable /// ne printa se u konzoli
 #      caption = "naslov koji se ne vidi, ali je valjda tu") 
 
+
+# factor ------------------------------------------------------------------
 
 frre.factor <- function (x, lab.duljina = 40, ime="", 
                          N = TRUE, drop = TRUE, kablica = TRUE, digits = 2, ...) {
@@ -124,7 +130,9 @@ frre.factor <- function (x, lab.duljina = 40, ime="",
   }
 }
 
-# PRIMJERI # factor ----
+
+# FACTOR primjeri ---------------------------------------------------------
+
 # s1 <- labelled(c("M", "M", "F"), c(Male = "M", Female = "F"))
 # s1f <- to_factor(s1)
 # var_label(s1f) <- "neko izrazito dugačko i nespretno ime velike dužine"
@@ -137,36 +145,37 @@ frre.factor <- function (x, lab.duljina = 40, ime="",
 # ====
 
 
-# numeric ----
-frre.numeric <- function (x, varLabDuljina = 40, ime="", 
-                          prosjekN = FALSE, kablica = TRUE, ...) {
-  varlab <- attributes(x)[["label"]]
-  if (nchar(ime) > 0) {
-    varlab <- ime
-    if (varLabDuljina == 40) varLabDuljina <- 200
-  }
-  nejm <- deparse(substitute(x))
-  gnjec.df <- merge.data.frame(as.data.frame(table(x)),
-                               as.data.frame(prop.table(table(x))),
-                               by = "x", sort = FALSE)
-  if (!is.null(varlab)) {
-    names(gnjec.df)[1] <- strtrim(varlab, varLabDuljina)
-  } else names(gnjec.df)[1] <- nejm
-  names(gnjec.df)[2] <- "Counts"
-  names(gnjec.df)[3] <- "Percents"
-  
-  if (prosjekN) {
-    cat("valid =", sum(!is.na(x)),
-                " missing =", sum(is.na(x)),
-                "mean =", round(mean(x, na.rm = TRUE), digits = 2))
-  }
-  if (kablica) {
-    knitr::kable(gnjec.df, digits = 2, ...)
-  } else {
-    gnjec.df$Percents <- round(gnjec.df$Percents * 100)
-    gnjec.df
-  }
-}
+# numeric DEPRECATED ------------------------------------------------------
+
+# frre.numeric <- function (x, varLabDuljina = 40, ime="", 
+#                           prosjekN = FALSE, kablica = TRUE, ...) {
+#   varlab <- attributes(x)[["label"]]
+#   if (nchar(ime) > 0) {
+#     varlab <- ime
+#     if (varLabDuljina == 40) varLabDuljina <- 200
+#   }
+#   nejm <- deparse(substitute(x))
+#   gnjec.df <- merge.data.frame(as.data.frame(table(x)),
+#                                as.data.frame(prop.table(table(x))),
+#                                by = "x", sort = FALSE)
+#   if (!is.null(varlab)) {
+#     names(gnjec.df)[1] <- strtrim(varlab, varLabDuljina)
+#   } else names(gnjec.df)[1] <- nejm
+#   names(gnjec.df)[2] <- "Counts"
+#   names(gnjec.df)[3] <- "Percents"
+#   
+#   if (prosjekN) {
+#     cat("valid =", sum(!is.na(x)),
+#                 " missing =", sum(is.na(x)),
+#                 "mean =", round(mean(x, na.rm = TRUE), digits = 2))
+#   }
+#   if (kablica) {
+#     knitr::kable(gnjec.df, digits = 2, ...)
+#   } else {
+#     gnjec.df$Percents <- round(gnjec.df$Percents * 100)
+#     gnjec.df
+#   }
+# }
 
 # PRIMJERI # numeric ----
 # frre(mtcars$cyl, prosjek = TRUE)
