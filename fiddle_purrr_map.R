@@ -1,25 +1,32 @@
 library(purrr); library(dplyr)
 
 x <- c(1,2,3,4)
-list(x)
+
+as.list(x) # ovo radi lapply kad mu je input atomic vector
+list(x) # A NE OVO!
 
 mean(x)
 
 map(x, mean)
+
 map_dbl(x, mean)
+sapply(x, mean)
 
 map_df(x, mean) # ne dela
 
-sapply(x, mean)
 
 
 
-map(1:5, runif) # vektor 1:5 je argument runif-u
+map(1:5, runif) # vektor 1:5 je argument runif-u...zašto?
 
--2:2 %>% map(rnorm, n = 5) #%>% map(mean)
-list(-2:2) %>% map(rnorm, n = 5)
+map(1:5, rnorm)
+map(1:5, rnorm, n = 500) %>% map(mean)
+map(1:5, rnorm, n = 500, mean = 1) %>% map(sd)
+map(1:5, rnorm, n = 500, mean = 1, sd = 1) # unused argument
 
-?rnorm
+-2:2 %>% map(rnorm, n = 5)
+as.list(-2:2) %>% map(rnorm, n = 5)
+
 
 # exercise
 col_summary <- function(df, FUN) {
