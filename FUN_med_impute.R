@@ -22,14 +22,17 @@ med_impute.character <- function(x) {
     stop("intervali nisu u rastućem nizu")
   }
   
-  #print(lower) # ovo zakomentiraj nakon malo dužeg testiranja
-  #print(upper)
+  # print(lower) # ovo zakomentiraj nakon malo dužeg testiranja
+  # print(upper)
   
-  add.to.lower <- unique(upper - lower) / 2
+  add.to.lower <- (upper - lower) / 2
   
-  if (identical(length(add.to.lower), 1L)) {
-    sredina <- lower + add.to.lower
-  } else stop("intervali nisu jednaki")
+  if (!identical(length(unique(add.to.lower)), 1L)) {
+    warning("intervali nisu jednaki", call. = FALSE)
+    } 
+  
+  sredina <- lower + add.to.lower
+  # print(add.to.lower)
   
   for (i in (seq_along(1:length(unique(x))))) {
     x[x == unique(x)[i]] <- sredina[i]
